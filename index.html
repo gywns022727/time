@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>주간 시간표 공유기 & 공강 찾기</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- 상단 네비게이션 및 제어 헤더 -->
+    <header class="app-header">
+      <div class="header-info">
+        <h1 class="header-title">📅 주간 시간표 & 공강 찾기</h1>
+        <p class="header-subtitle">친구와 시간표를 겹쳐보고 함께 비는 공통 공강 시간을 찾아보세요!!</p>
+      </div>
+
+      <!-- 제어 및 공유 액션 버튼 그룹 -->
+      <div class="header-actions">
+        <button id="open-modal-btn" class="btn btn-primary">+ 수업 추가</button>
+        <button id="export-json-btn" class="btn btn-outline" title="시간표를 JSON 파일로 다운로드">💾 내보내기</button>
+        <button id="import-json-btn" class="btn btn-outline" title="JSON 파일을 불러와 시간표 반영">📂 불러오기</button>
+        <button id="share-url-btn" class="btn btn-accent" title="시간표 공유 URL 복사">🔗 공유 URL 복사</button>
+        
+        <!-- 숨겨진 파일 업로드 인풋 -->
+        <input type="file" id="json-file-input" accept=".json,application/json" class="visually-hidden">
+      </div>
+    </header>
+
+    <!-- 시간표 모드 전환 탭 및 범례 -->
+    <section class="view-switch-container">
+      <div class="segmented-control" role="tablist">
+        <button id="tab-my" class="segment-btn active" data-view="my">👤 내 시간표</button>
+        <button id="tab-friend" class="segment-btn" data-view="friend">👥 친구 시간표</button>
+        <button id="tab-overlay" class="segment-btn" data-view="overlay">✨ 시간표 겹쳐보기</button>
+      </div>
+
+      <div id="overlay-legend" class="legend-box hidden">
+        <div class="legend-item"><span class="color-dot dot-my"></span> 내 수업</div>
+        <div class="legend-item"><span class="color-dot dot-friend"></span> 친구 수업</div>
+        <div class="legend-item"><span class="color-dot dot-free"></span> 공통 공강</div>
+      </div>
+    </section>
+
+    <!-- 시간표 메인 래퍼 -->
+    <main class="timetable-card">
+      <div class="table-responsive">
+        <div id="timetable-grid" class="timetable-grid">
+          <!-- 헤더 행 (시간 & 요일) -->
+          <div class="grid-header time-label-corner">시간</div>
+          <div class="grid-header">월</div>
+          <div class="grid-header">화</div>
+          <div class="grid-header">수</div>
+          <div class="grid-header">목</div>
+          <div class="grid-header">금</div>
+
+          <!-- JavaScript에서 시간 행 및 슬롯, 수업 카드를 동적으로 렌더링 -->
+        </div>
+      </div>
+    </main>
+
+    <!-- 하단 푸터 및 안내 문구 -->
+    <footer class="app-footer">
+      <p id="footer-guide-text">💡 등록된 수업을 클릭하면 삭제할 수 있습니다. (데이터는 브라우저에 자동 저장됩니다)</p>
+    </footer>
+  </div>
+
+  <!-- 수업 등록 모달 -->
+  <div id="course-modal" class="modal-backdrop hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2 id="modal-title" class="modal-title">수업 추가</h2>
+        <button id="close-modal-btn" class="btn-icon" aria-label="닫기">&times;</button>
+      </div>
+
+      <form id="course-form" class="modal-form">
+        <div class="form-group">
+          <label for="course-target">등록 대상 <span class="required">*</span></label>
+          <select id="course-target" name="courseTarget" required>
+            <option value="my">내 시간표에 추가</option>
+            <option value="friend">친구 시간표에 추가</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="course-title">과목명 <span class="required">*</span></label>
+          <input type="text" id="course-title" name="courseTitle" placeholder="예: 객체지향프로그래밍" required>
+        </div>
+
+        <div class="form-group">
+          <label for="course-room">강의실 <span class="required">*</span></label>
+          <input type="text" id="course-room" name="courseRoom" placeholder="예: IT관 301호" required>
+        </div>
+
+        <div class="form-group">
+          <label for="course-day">요일 <span class="required">*</span></label>
+          <select id="course-day" name="courseDay" required>
+            <option value="mon">월요일</option>
+            <option value="tue">화요일</option>
+            <option value="wed">수요일</option>
+            <option value="thu">목요일</option>
+            <option value="fri">금요일</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="course-start">시작 시간 <span class="required">*</span></label>
+            <select id="course-start" name="courseStart" required>
+              <option value="9">09:00</option>
+              <option value="10">10:00</option>
+              <option value="11">11:00</option>
+              <option value="12">12:00</option>
+              <option value="13">13:00</option>
+              <option value="14">14:00</option>
+              <option value="15">15:00</option>
+              <option value="16">16:00</option>
+              <option value="17">17:00</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="course-end">종료 시간 <span class="required">*</span></label>
+            <select id="course-end" name="courseEnd" required>
+              <option value="10">10:00</option>
+              <option value="11">11:00</option>
+              <option value="12">12:00</option>
+              <option value="13">13:00</option>
+              <option value="14">14:00</option>
+              <option value="15">15:00</option>
+              <option value="16">16:00</option>
+              <option value="17">17:00</option>
+              <option value="18" selected>18:00</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="cancel-modal-btn" class="btn btn-secondary">취소</button>
+          <button type="submit" class="btn btn-primary">추가하기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
